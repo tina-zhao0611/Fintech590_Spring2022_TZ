@@ -7,9 +7,11 @@ x = np.array(data["x"])
 y = np.array(data["y"])
 df = pd.DataFrame({'x': x, 'y': y})
 
+#get OLS estimated parameters
 regression = sm.OLS(y, sm.add_constant(x)) 
 model_ols = regression.fit() 
 print(model_ols.summary())
+
 Matrix_cov = np.cov(x, y)
 cov_xy = Matrix_cov[0][1]
 var_x = Matrix_cov[0][0]

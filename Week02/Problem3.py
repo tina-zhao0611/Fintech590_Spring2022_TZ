@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf 
 
-
+#AR(1) Model
 n = 1000  
 y_t_1_AR1 = [1]
 yt_AR1 = []
@@ -12,6 +12,7 @@ for i in range(0, n):
     y_t_1_AR1.append(y)
     yt_AR1.append(y)
 
+#AR(2) Model
 y_t_2_AR2 = [0.5, 1]
 y_t_1_AR2 = [1]
 yt_AR2 = []
@@ -21,6 +22,7 @@ for i in range(0, n):
     y_t_1_AR2.append(y)
     yt_AR2.append(y)
 
+#AR(3) Model
 y_t_3_AR3 = [1.1, 0.5, 1]
 y_t_2_AR3 = [0.5, 1]
 y_t_1_AR3 = [1]
@@ -62,7 +64,7 @@ plt.cla()
 plot_pacf(pd.DataFrame({'y_t': np.transpose(yt_AR3)}), title = "PACF----AR3", lags = 10, method='ywm')
 plt.savefig("Week02\\Problem3_AR3_PACF.png")
 
-
+#MA(1) Model
 et_1_MA1 = []
 et_1_MA1.append(np.random.randn(1)[0])
 et_MA1 = []
@@ -74,7 +76,7 @@ for i in range(0, n):
     et_MA1.append(e_t)
     y_MA1.append(y)
 
-
+#MA(2) Model
 et_2_MA2 =[]
 et_2_MA2.append(np.random.randn(1)[0])
 et_2_MA2.append(np.random.randn(1)[0])
@@ -89,6 +91,7 @@ for i in range(0, n):
     et_MA2.append(e_t)
     y_MA2.append(y)
 
+#MA(3) Model
 et_3_MA3 =[]
 et_3_MA3.append(np.random.randn(1)[0])
 et_3_MA3.append(np.random.randn(1)[0])

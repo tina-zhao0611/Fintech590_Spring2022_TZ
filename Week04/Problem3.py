@@ -64,17 +64,17 @@ for portfolio in groups:
     portfolio_p.append(df_p)
     current_p.append(df_p.loc[df_p.shape[0] - 1]["value"])
     df_r = return_calculate(df_p, "ARITHMETIC", "value").loc[:,"return"]
-    df_r = df_r - np.mean(df_r) #make the mean 0
     r_mean.append(np.mean(df_r))
+    df_r = df_r - np.mean(df_r) #make the mean 0
     portfolio_r.append(df_r)
     
 all_p = pd.concat(portfolio_p, axis=1)
 netValue_all = pd.DataFrame({"Date": prices["Date"], "price":np.sum(all_p.value, axis =1)})
 current_p_all = netValue_all.loc[netValue_all.shape[0] - 1]["price"]
-
 netValue_r = return_calculate(netValue_all, "ARITHMETIC", "price").loc[:,"return"]
-netValue_r = netValue_r - np.mean(netValue_r) #make the mean 0
 mean_all = np.mean(netValue_r)
+netValue_r = netValue_r - np.mean(netValue_r) #make the mean 0
+
 
 #===========================================================================
 # select the MLE fitted T distribution method

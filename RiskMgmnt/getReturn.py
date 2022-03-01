@@ -1,5 +1,7 @@
 '''
 module for calculating return
+    return_calculate() operate on a specified column
+    return_calculate_mat() will calculate returns on every column of the DataFrame provided
 
 4 methods can be chose from
 
@@ -22,7 +24,7 @@ def return_calculate(price, method = "ARITHMETIC", column_name = "price"):
 
         #If other two methods
         else:
-            price.loc[i, "p1p0"] = price.loc[i, column_name]  / price.loc[i - 1, column_name] 
+            price.loc[i, "p1p0"] = price.loc[i, column_name].values  / price.loc[i - 1, column_name].values 
 
     df_r = price[1:].copy()
 
@@ -36,8 +38,25 @@ def return_calculate(price, method = "ARITHMETIC", column_name = "price"):
 
     #Geometric Brownian Motion
     if(method == "GBM"):
-        df_r.loc[:, "return"] = np.log(df_r.loc[:, "p1p0"])
+        df_r.loc[:, "return"] = np.log(df_r.loc[:, "p1p0"].values)
 
     df_r = df_r.drop(columns="p1p0")
     
+    return df_r
+
+def return_calculate_mat(prices, method = "ARITHMETIC"):
+
+    if(method == "BM"):
+        df_r = prices.diff()[1:].copy()
+
+    #Arithmetic Return
+    if(method == "ARITHMETIC"):
+        df_r = prices.pct_change()[1:].copy()
+        # the pct_change() function is verified to be performing expected Arithmetic Return calculation
+        # prices.pct_change() == (prices/prices.shift(1) - 1) 
+        
+    #Geometric Brownian Motion
+    if(method == "GBM"):
+        df_r = np.log(prices/prices.shift(1))[1:].copy()
+        
     return df_r

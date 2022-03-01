@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import scipy.stats as st
 
+from RiskMgmnt import getVaR
 
 #Fitting normal distribution
 def normal(data, alpha = 0.05):
@@ -42,3 +43,10 @@ def T(data, alpha = 0.05):
     ES_T = temp["tsim"].mean() + mu
     
     return ES_T
+
+def empirical(data, alpha = 0.05):
+    VaR_emp = getVaR.empirical(data, alpha)
+    temp = data[data < VaR_emp].dropna()
+    ES_emp = temp.mean()
+    
+    return ES_emp

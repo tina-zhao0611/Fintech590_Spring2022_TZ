@@ -1,13 +1,14 @@
 '''
 module for calculating VaR
 
-4 methods are implemented
+6 methods are implemented
 
 fitting normal distribution
 fitting normal with exponetially weighted covariance
 fitting t distribution with MLE
 historical simulation
 fitting generalized t distribution
+get VaR directly from series of data
 
 return the value of VaR (negative value means a loss)
 
@@ -15,6 +16,7 @@ return the value of VaR (negative value means a loss)
 import pandas as pd
 import numpy as np
 import scipy.stats as st
+import math
 from scipy.optimize import minimize
 
 #Normal distribution
@@ -70,3 +72,7 @@ def T(data, alpha = 0.05):
 
     return VaR_T
 
+def empirical(data, alpha = 0.05):
+    VaR_emp = np.quantile(data, alpha)
+    
+    return VaR_emp

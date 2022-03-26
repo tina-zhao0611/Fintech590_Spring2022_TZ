@@ -47,6 +47,5 @@ def T(data, alpha = 0.05):
 def empirical(data, alpha = 0.05):
     VaR_emp = getVaR.empirical(data, alpha)
     temp = data[data < VaR_emp].dropna()
-    ES_emp = temp.mean()
-    
+    ES_emp = temp.values.mean()
     return ES_emp

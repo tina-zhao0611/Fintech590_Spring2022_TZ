@@ -148,15 +148,16 @@ df_VAR_pct = pd.DataFrame(VAR_pct, index = ["VaR(%)"]).T
 df_ES_pct = pd.DataFrame(ES_pct, index = ["ES(%)"]).T
 
 
-data_sim = df_VAR.join(df_ES.join(df_MEAN))
+data_sim = df_MEAN.join(df_VAR.join(df_ES))
+print(data_sim)
+
 data_sim.sort_values(by = "VaR", inplace = True)
 data_sim_pct = df_VAR_pct.join(df_ES_pct.join(df_MEAN_pct))
 data_sim_pct.sort_values(by = "VaR(%)", inplace = True)
+# plt.cla()
+# data_sim.plot(figsize = (10, 10), kind = "bar", title = "Portfolio Risk")
+# plt.savefig("Week06\\plots\\Problem3_risk.png")
 
-plt.cla()
-data_sim.plot(figsize = (10, 10), kind = "bar", title = "Portfolio Risk")
-plt.savefig("Week06\\plots\\Problem3_risk.png")
+# print("Portfolio Risk\n", data_sim)
 
-print("Portfolio Risk\n", data_sim)
-
-print("Portfolio Risk (%)\n", data_sim_pct)
+# print("Portfolio Risk (%)\n", data_sim_pct)

@@ -68,6 +68,12 @@ data["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(str(x), "%Y%m%d
 stocks["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(x, "%m/%d/%Y"), stocks["Date"]))
 mom["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(str(x), "%Y%m%d"), mom["Date"]))
 
+# get past 10 years history data
+startdate_str = "20120131"
+data = data[data["Date"]>datetime.datetime.strptime(startdate_str, "%Y%m%d")]
+stocks = stocks[stocks["Date"]>datetime.datetime.strptime(startdate_str, "%Y%m%d")]
+mome = mom[mom["Date"]>datetime.datetime.strptime(startdate_str, "%Y%m%d")]
+
 # divided by 100 to get like unit
 data[factor_list_FF3] = data[factor_list_FF3]/100 
 mom["Mom"] = mom["Mom"]/100
@@ -171,7 +177,7 @@ for i in range(len(rp)):
         optimal_v = vp[i]
 optimal_weight, vol = getMinVol(optimal_r)
 marketPortfolio = pd.DataFrame({"Stock": stock_list,"weights(%)": [round(x, 4) for x in (optimal_weight * 100)]})
-print(marketPortfolio.T)
+print(marketPortfolio)
 
 plt.cla()
 plt.plot(np.sqrt(vp), rp)

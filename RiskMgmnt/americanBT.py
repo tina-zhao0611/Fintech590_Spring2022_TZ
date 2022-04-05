@@ -4,14 +4,23 @@ model for option valuation using binomial tree
 methods for calculating greeks using finite difference
 '''
 
+import datetime
 import numpy as np
 from scipy.optimize import fsolve
 
-
-# from RiskMgmnt import Options
+# import Options
 from RiskMgmnt import Options
     # def __init__(self, type,  exp_date, K, S0, r_benefit = 0, r_cost = 0, dateformat = '%m/%d/%Y'):
-    
+
+def getDivT(current_date, exp_date, payment_date, dateformat = '%m/%d/%Y'):
+    current = datetime.datetime.strptime(current_date, dateformat)
+    exp = datetime.datetime.strptime(exp_date, dateformat)
+    payment = datetime.datetime.strptime(payment_date, dateformat)
+    nDaysToExp = (exp - current).days
+    nToPay = (payment - current).days
+    return nToPay, nDaysToExp    
+
+
 def americanBT_noDiv(option, ttm, rf, sigma, steps):
     b = rf - option.r_benefit + option.r_cost
     dt = ttm / steps
@@ -96,7 +105,7 @@ def getImpVol(option, current_date, rf, value, steps, div, divT):
         # value is the real market price of option
     ttm = option.getT(current_date)
     def vol_helper(vol): #solve this function for zero to get implied volatility
-        result = value - americanBT(option, ttm, rf, vol, steps, div, divT) - 0.0001
+        result = value - americanBT(option, ttm, rf, vol, steps, div, divT)
         return result
    
     impliedVol = fsolve(vol_helper, 0.3)
@@ -229,16 +238,16 @@ def getAllGreeks(option, current_date, sigma, rf, steps, div, divT, dateformat =
 
 
 if __name__ == '__main__':
-    test1 = Options.option("put", "03/21/2022", 100, 100)
-    v1 = americanBT(test1, 0.5, 0.08, 0.3, 2)
-    test2 = Options.option("call", "03/21/2022", 100, 100)
-    current = "01/02/2022"
-    ttm = test2.getT(current)
-    v2 = americanBT(test2, 0.5, 0.08, 0.3, 100)
-    v3 = americanBT(test2, 0.5, 0.08, 0.3, 2, [1], [1])
-    v5 = americanBT(test2, 0.5, 0.08, 0.3, 4, [1], [2])
+    # test1 = Options.option("put", "03/21/2022", 100, 100)
+    # v1 = americanBT(test1, 0.5, 0.08, 0.3, 2)
+    test2 = Options.option("call", "03/18/2022", 100, 100)
+    current = "02/25/2022"
+    # ttm = test2.getT(current)
+    # v2 = americanBT(test2, 0.5, 0.08, 0.3, 100)
+    # v3 = americanBT(test2, 0.5, 0.08, 0.3, 2, [1], [1])
+    # v5 = americanBT(test2, 0.5, 0.08, 0.3, 4, [1], [2])
 
-    v4 = americanBT(test2, ttm, 0.08, 0.3, 100, [1], [50])
-    vol = getImpVol(test2, current, 0.08, v4, 100, [1], [50])
-    print(v1,v2,v3, v4,v5)
+    # v4 = americanBT(test2, ttm, 0.08, 0.3, 100, [1], [50])
+    vol = getImpVol(164.85, current, 0.0025, 4.5, 100, [1], [50])
+    # print(v1,v2,v3, v4,v5)
     print(vol)

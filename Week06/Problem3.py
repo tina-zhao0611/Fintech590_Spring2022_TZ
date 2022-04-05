@@ -78,23 +78,29 @@ plt.savefig("Week06\\plots\\Problem3_PNL.png")
 
 # forawrd simulation
 returns = pd.read_csv("Week06\\DailyReturn.csv")
-
-r_AAPL = returns["AAPL"] - returns["AAPL"].mean()
+r_AAPL = returns["AAPL"]
+# r_AAPL = returns["AAPL"] - returns["AAPL"].mean()
 std = r_AAPL.std() 
 
-nsim = 1000
+nsim = 10000
 p_arr = [] #to store simulated price
 T = 10
+simReturns = np.random.normal(loc = 0, scale = std, size = (T * nsim, 1))
+# for i in range(nsim): #do nsim times of the simulation
+#     r = np.random.normal(loc = 0, scale = std, size = (T, 1)) #draw 10 random returns from normal distribution
+#     p = np.zeros([T, 1])
+#     p[0] = current_price * (1 + r[0])
+#     for i in range(1, T):
+#         p[i] = p[i - 1] * (1 + r[i])
 
-for i in range(nsim): #do nsim times of the simulation
-    r = np.random.normal(loc = 0, scale = std, size = (T, 1)) #draw 10 random returns from normal distribution
-    p = np.zeros([T, 1])
-    p[0] = current_price * (1 + r[0])
-    for i in range(1, T):
-        p[i] = p[i - 1] * (1 + r[i])
+#     p10 = p[T - 1] #the price at day 10 in the future
+#     p_arr.append(p10[0])
 
-    p10 = p[T - 1] #the price at day 10 in the future
-    p_arr.append(p10[0])
+for i in range(nsim):
+    r = 1
+    for j in range(T):
+        r *= (1 + simReturns[T * i + j ])
+    p_arr.append(current_price * r)
 
 dfs_value_sim = []
 dfs_PnL_sim = []

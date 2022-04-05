@@ -253,3 +253,11 @@ if __name__ == '__main__':
     print(d)
     d = test.Theta(current_date="02/25/2022", sigma = 0.4, rf = 0.0025, method = "FD")
     print(d)
+    
+    current_price = 164.85
+    rf = 0.0025
+    r_benefit = 0.0053
+    current_date = "02/25/2022"
+    test1 = option("call", "03/18/2022", 165, current_price, r_benefit)
+    print(test1.getImpVol(current_date, rf, 4.5))
+    print(test1.getT(current_date, daysForward=10))

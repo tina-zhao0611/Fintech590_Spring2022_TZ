@@ -44,20 +44,16 @@ def getEstimateReturn(stock_list, model_data, factor_data, factor_list):
     return df_r
 
 
-data = pd.read_csv("Week07\\F-F_Research_Data_Factors_daily.csv")
-stocks = pd.read_csv("Week07\\DailyReturn.csv")
-mom = pd.read_csv("Week07\\F-F_Momentum_Factor_daily.csv")
+data = pd.read_csv("Week08\\F-F_Research_Data_Factors_daily.csv")
+stocks = pd.read_csv("Week08\\DailyReturn.csv")
+mom = pd.read_csv("Week08\\F-F_Momentum_Factor_daily.csv")
 # eliminate white spaces
 col_names = mom.columns.tolist()
 for index,value in enumerate(col_names):
     col_names[index]= value.replace(" ","")
 mom.columns=col_names 
 
-stock_list = ["AAPL", "FB", "UNH", "MA",
-                 "MSFT", "NVDA", "HD", "PFE",
-                 "AMZN", "BRK-B", "PG", "XOM",
-                 "TSLA", "JPM", "V", "DIS",
-                 "GOOGL", "JNJ", "BAC", "CSCO"]
+stock_list = ["AAPL",  "MSFT", "BRK-B", "JNJ", "CSCO"]
 
 factor_list_FF3 = ["Mkt-RF", "SMB", "HML"]
 factor_list_FFM = ["Mkt-RF", "SMB", "HML", "Mom"]
@@ -97,7 +93,7 @@ nStocks = len(stock_list)
 df_stocks = stocks[stock_list]
 
 sigma = np.matrix((np.log(df_stocks + 1)).cov()*255)
-r_stocks = np.matrix((exp_r_FFM["return"]).values).T
+r_stocks = np.matrix((exp_r_FF3["return"]).values).T
 
 # solve for minmum variance for given return level
 def getMinVol(r_target):
@@ -114,7 +110,7 @@ def getMinVol(r_target):
             {'type': 'eq', 'fun': lambda w: getPortfolioReturn(w, r_stocks) - r_target},
             {'type': 'ineq', 'fun': lambda w: w - 0})
 
-    result = minimize(riskOptimize, np.random.randn(20), constraints = cons)
+    result = minimize(riskOptimize, np.random.randn(nStocks), constraints = cons)
     weight = result.x
     vol = riskOptimize(weight)
     return weight, vol
@@ -149,7 +145,7 @@ plt.plot(vp, rp)
 plt.xlabel("Portfolio variance")
 plt.ylabel("Portfolio annual return")
 plt.title("Efficient Frontier")
-plt.savefig("Week07\\plots\\Problem3_efficientFrontier")
+plt.savefig("Week08\\plots\\Problem3_efficientFrontier")
 
 #solve for the optimal portfolio
 '''
@@ -187,4 +183,4 @@ plt.annotate('Market Portfolio', xy=(np.sqrt(optimal_v),optimal_r), xytext=(np.s
 plt.xlabel("Portfolio variance")
 plt.ylabel("Portfolio annual return")
 plt.title("Efficient Frontier and Max SR portfolio")
-plt.savefig("Week07\\plots\\Problem3_CML")
+plt.savefig("Week08\\plots\\Problem3_CML")

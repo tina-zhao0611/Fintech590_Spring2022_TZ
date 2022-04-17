@@ -44,8 +44,11 @@ def return_calculate(price, method = "ARITHMETIC", column_name = "price"):
     
     return df_r
 
-def return_calculate_mat(prices, method = "ARITHMETIC"):
-
+def return_calculate_mat(prices, method = "ARITHMETIC", dateCol = "Date"):
+    if (dateCol != "NULL"):
+        date = prices[dateCol][1:]
+        prices = prices.drop(dateCol, axis = 1)
+         
     if(method == "BM"):
         df_r = prices.diff()[1:].copy()
 
@@ -58,5 +61,9 @@ def return_calculate_mat(prices, method = "ARITHMETIC"):
     #Geometric Brownian Motion
     if(method == "GBM"):
         df_r = np.log(prices/prices.shift(1))[1:].copy()
+    
+    if (dateCol != "NULL"):
+        df_r = pd.concat([date, df_r], axis = 1)
+    
         
     return df_r

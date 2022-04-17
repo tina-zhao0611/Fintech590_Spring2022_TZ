@@ -97,94 +97,113 @@ nStocks = len(stock_list)
 df_stocks = stocks[stock_list]
 
 sigma = np.matrix((np.log(df_stocks + 1)).cov()*255)
-r_stocks = np.matrix((exp_r_FFM["return"]).values).T
+r_stocks = np.matrix((exp_r_FFM["return"]).values)
 
-# solve for minmum variance for given return level
-def getMinVol(r_target):
-    def riskOptimize(w):
-        w_m = np.matrix(w).T
-        sigma_2 = (w_m.T * sigma * w_m)[0, 0]
-        return sigma_2
-    def getPortfolioReturn(w, r):
-        w_m = np.matrix(w).T
-        result = (w_m.T * r)[0,0]
-        return result
+def sharpeCalculate(w, stockReturn, stockCov, rf):
+    w = np.matrix(w)
+    r_p = w * stockReturn.T
+    s_p = np.sqrt(w * stockCov * w.T)
+    sharpe = (r_p[0,0] - rf) / s_p[0,0] 
+    return -sharpe
+x0 = np.array(nStocks*[1 / nStocks])
+args = (r_stocks, sigma, 0.00025)
+bound = [(0.0, 1) for _ in stock_list]
+cons = {'type':'eq', 'fun': lambda x: np.sum(x) - 1}
+result = minimize(sharpeCalculate, x0 = x0, args = args, bounds = bound, constraints = cons)
 
-    cons = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1},
-            {'type': 'eq', 'fun': lambda w: getPortfolioReturn(w, r_stocks) - r_target},
-            {'type': 'ineq', 'fun': lambda w: w - 0})
-
-    result = minimize(riskOptimize, np.random.randn(20), constraints = cons)
-    weight = result.x
-    vol = riskOptimize(weight)
-    return weight, vol
-
-
-''' 
-tried to use the cvxopt module but didn't work
-
-# import cvxopt
-# P = cvxopt.matrix(df_stocks.cov().values) 
-# q = cvxopt.matrix(np.zeros(nStocks))
-# A = cvxopt.matrix(np.append(np.ones(nStocks), np.array((exp_r_FF3["return"]/100).values)), (nStocks,2)).T
-# b = cvxopt.matrix([1, r_target])
-# G = cvxopt.matrix(-np.eye(nStocks))
-# h = cvxopt.matrix(np.zeros(nStocks))
-# result = cvxopt.solvers.coneqp(P,q,G,h,A,b)
-# print(result['x']) 
-'''
-
-# plot a efficiency frontier
-rp = np.linspace(0.005, 0.2, 50)
-vp = []
-for r in rp:
-    weight, vol = getMinVol(r)
-    w_m = np.matrix(weight).T
-    result = (w_m.T * r_stocks)[0,0]
-    # print(result)
-    vp.append(vol)
-
-plt.cla()
-plt.plot(vp, rp)
-plt.xlabel("Portfolio variance")
-plt.ylabel("Portfolio annual return")
-plt.title("Efficient Frontier")
-plt.savefig("Week07\\plots\\Problem3_efficientFrontier")
-
-#solve for the optimal portfolio
-'''
-wasn't able to get a stable convergence through this method
-
-# rf = 0.0025
-# def getSharpe(r):
-#     weight, vol = getMinVol(r)
-#     sharpe = (r - rf) / np.sqrt(vol)
-#     return -sharpe
-
-# cons = ({'type': 'ineq', 'fun': lambda r: r-rf})
-# result2 = minimize(getSharpe, 0.01, constraints = cons)
-'''
-rf = 0.0025
-optimal_sharpe = 0.0
-optimal_r = 0.0
-optimal_v = 0.0
-d = []
-for i in range(len(rp)):
-    c_sharpe = (rp[i] - rf) / np.sqrt(vp[i])
-    if (c_sharpe > optimal_sharpe):
-        optimal_sharpe = c_sharpe
-        optimal_r = rp[i]
-        optimal_v = vp[i]
-optimal_weight, vol = getMinVol(optimal_r)
+optimal_weight = result.x
 marketPortfolio = pd.DataFrame({"Stock": stock_list,"weights(%)": [round(x, 4) for x in (optimal_weight * 100)]})
 print(marketPortfolio)
 
-plt.cla()
-plt.plot(np.sqrt(vp), rp)
-plt.plot([0, np.sqrt(optimal_v)], [rf, optimal_r])
-plt.plot(np.sqrt(optimal_v), optimal_r,'or') 
-plt.annotate('Market Portfolio', xy=(np.sqrt(optimal_v),optimal_r), xytext=(np.sqrt(optimal_v), optimal_r - 0.01),arrowprops=dict(arrowstyle='->'))
-plt.xlabel("Portfolio variance")
-plt.ylabel("Portfolio annual return")
-plt.title("Efficient Frontier and Max SR portfolio")
-plt.savefig("Week07\\plots\\Problem3_CML")
+
+
+# # solve for minmum variance for given return level
+# def getMinVol(r_target):
+#     def riskOptimize(w):
+#         w_m = np.matrix(w).T
+#         sigma_2 = (w_m.T * sigma * w_m)[0, 0]
+#         return sigma_2
+#     def getPortfolioReturn(w, r):
+#         w_m = np.matrix(w).T
+#         result = (w_m.T * r)[0,0]
+#         return result
+
+#     cons = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1},
+#             {'type': 'eq', 'fun': lambda w: getPortfolioReturn(w, r_stocks) - r_target},
+#             {'type': 'ineq', 'fun': lambda w: w - 0})
+
+#     result = minimize(riskOptimize, np.random.randn(20), constraints = cons)
+#     weight = result.x
+#     vol = riskOptimize(weight)
+#     return weight, vol
+
+
+# ''' 
+# tried to use the cvxopt module but didn't work
+
+# # import cvxopt
+# # P = cvxopt.matrix(df_stocks.cov().values) 
+# # q = cvxopt.matrix(np.zeros(nStocks))
+# # A = cvxopt.matrix(np.append(np.ones(nStocks), np.array((exp_r_FF3["return"]/100).values)), (nStocks,2)).T
+# # b = cvxopt.matrix([1, r_target])
+# # G = cvxopt.matrix(-np.eye(nStocks))
+# # h = cvxopt.matrix(np.zeros(nStocks))
+# # result = cvxopt.solvers.coneqp(P,q,G,h,A,b)
+# # print(result['x']) 
+# '''
+
+# # plot a efficiency frontier
+# rp = np.linspace(0.005, 0.2, 50)
+# vp = []
+# for r in rp:
+#     weight, vol = getMinVol(r)
+#     w_m = np.matrix(weight).T
+#     result = (w_m.T * r_stocks)[0,0]
+#     # print(result)
+#     vp.append(vol)
+
+# plt.cla()
+# plt.plot(vp, rp)
+# plt.xlabel("Portfolio variance")
+# plt.ylabel("Portfolio annual return")
+# plt.title("Efficient Frontier")
+# plt.savefig("Week07\\plots\\Problem3_efficientFrontier")
+
+# #solve for the optimal portfolio
+# '''
+# wasn't able to get a stable convergence through this method
+
+# # rf = 0.0025
+# # def getSharpe(r):
+# #     weight, vol = getMinVol(r)
+# #     sharpe = (r - rf) / np.sqrt(vol)
+# #     return -sharpe
+
+# # cons = ({'type': 'ineq', 'fun': lambda r: r-rf})
+# # result2 = minimize(getSharpe, 0.01, constraints = cons)
+# '''
+# rf = 0.0025
+# optimal_sharpe = 0.0
+# optimal_r = 0.0
+# optimal_v = 0.0
+# d = []
+# for i in range(len(rp)):
+#     c_sharpe = (rp[i] - rf) / np.sqrt(vp[i])
+#     if (c_sharpe > optimal_sharpe):
+#         optimal_sharpe = c_sharpe
+#         optimal_r = rp[i]
+#         optimal_v = vp[i]
+# optimal_weight, vol = getMinVol(optimal_r)
+# marketPortfolio = pd.DataFrame({"Stock": stock_list,"weights(%)": [round(x, 4) for x in (optimal_weight * 100)]})
+# print(marketPortfolio)
+
+# plt.cla()
+# plt.plot(np.sqrt(vp), rp)
+# plt.plot([0, np.sqrt(optimal_v)], [rf, optimal_r])
+# plt.plot(np.sqrt(optimal_v), optimal_r,'or') 
+# plt.annotate('Market Portfolio', xy=(np.sqrt(optimal_v),optimal_r), xytext=(np.sqrt(optimal_v), optimal_r - 0.01),arrowprops=dict(arrowstyle='->'))
+# plt.xlabel("Portfolio variance")
+# plt.ylabel("Portfolio annual return")
+# plt.title("Efficient Frontier and Max SR portfolio")
+# plt.savefig("Week07\\plots\\Problem3_CML")
+

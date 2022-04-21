@@ -1,7 +1,4 @@
-from doctest import OPTIONFLAGS_BY_NAME
 import sys,os
-
-from Options import option
 
 # __file__ = "Problem2.py"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
@@ -185,11 +182,10 @@ for name, portfolio in groups:
     deltas[name] = (getPortfolioDelta(portfolio, current_price, current_date, div))
 
 df_deltas = pd.DataFrame(deltas, index=["Delta"]).T
-print(df_deltas)
+
 
 df_deltas["VaR"] = st.norm.ppf(0.05, loc = 0, scale = std) * np.sqrt(10) * df_deltas["Delta"] * current_price 
-
-df_pnl.join(df_deltas)
-
-
-   
+df_deltas["ES"] = np.sqrt(10) * std * st.norm.pdf(st.norm.ppf(0.05)) / 0.05 * df_deltas["Delta"] * current_price 
+print(df_deltas)
+# df_pnl.join(df_deltas)
+# print(df_pnl)

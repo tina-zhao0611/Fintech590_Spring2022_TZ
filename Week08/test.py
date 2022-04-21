@@ -135,3 +135,13 @@ plt.legend()
 
 plt.suptitle("Sensitivity Comparision (dividend paid earlier)")
 plt.savefig("Week07\\plots\\Problem1_dividendSensitivity2.png")
+
+
+import time
+
+for i in tqdm(range (100)):
+    time.sleep(2)
+
+a = np.zeros(100)
+for m in tqdm(a):
+    time.sleep(0.5)

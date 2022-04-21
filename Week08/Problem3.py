@@ -6,8 +6,15 @@ from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from sympy import N
 import scipy.stats as st
+from tqdm import tqdm
 
-from RiskMgmnt import getReturn, getOptimalPortfolio, T_dist_fitter, Statistics, Simulations, getES
+
+import sys,os
+from sympy import div
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+sys.path.append(BASE_DIR)
+
+from RiskMgmnt import getReturn, multiFactor, getOptimalPortfolio, T_dist_fitter,Statistics, Simulations, getES, getVaR
 
 def whiteSpace(df):
     col_names = df.columns.tolist()
@@ -16,39 +23,52 @@ def whiteSpace(df):
     df.columns=col_names 
     return df
 
-data = whiteSpace(pd.read_csv("Week08\\F-F_Research_Data_Factors_daily.csv"))
-stocks = whiteSpace(pd.read_csv("Week08\\DailyReturn.csv"))
-mom = whiteSpace(pd.read_csv("Week08\\F-F_Momentum_Factor_daily.csv"))
+data = pd.read_csv("Week08\\F-F_Research_Data_Factors_daily.csv")
+stocks = pd.read_csv("Week08\\DailyReturn.csv")
+mom = pd.read_csv("Week08\\F-F_Momentum_Factor_daily.csv")
+# eliminate white spaces
+col_names = mom.columns.tolist()
+for index,value in enumerate(col_names):
+    col_names[index]= value.replace(" ","")
+mom.columns=col_names 
 
-factor_list = ["Mkt-RF", "SMB", "HML", "Mom"]
 stock_list = ["AAPL",  "MSFT", "BRK-B", "JNJ", "CSCO"]
+factor_list = ["Mkt-RF", "SMB", "HML", "Mom"]
 
+
+# convert the date format 
 data["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(str(x), "%Y%m%d"), data["Date"]))
 stocks["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(x, "%m/%d/%Y"), stocks["Date"]))
 mom["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(str(x), "%Y%m%d"), mom["Date"]))
 
-FFM = pd.merge(data, mom, on = "Date", how = "left").dropna(axis = 0)
 
-# divided by 100 to get like unit
-FFM[factor_list] = FFM[factor_list]/100 
-toReg = pd.merge(stocks, FFM, on = "Date", how = "left").dropna(axis = 0)
+ffm = pd.merge(data, mom, on = "Date", how = "left")
 
-X = np.array(sm.add_constant(toReg[factor_list]))
-Y =np.array(toReg[stock_list])
+toReg = pd.merge(stocks, pd.merge(data, mom, on = "Date", how = "left"), on = "Date", how = "left")
+toReg[factor_list] = toReg[factor_list] /100
 
-Betas = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), Y)[1:]
+betas, Betas = multiFactor.getParameters(toReg, stock_list, factor_list)
+
+print(betas)
 
 startdate_str = "20120114"
 ENDdate_str = "20220115"
-toMean = FFM[FFM["Date"]>datetime.datetime.strptime(startdate_str, "%Y%m%d")]
-toMean = toMean[toMean["Date"]<datetime.datetime.strptime(ENDdate_str, "%Y%m%d")]
+data = data[data["Date"]>datetime.datetime.strptime(startdate_str, "%Y%m%d")]
+mom = mom[mom["Date"]>datetime.datetime.strptime(startdate_str, "%Y%m%d")]
+data = data[data["Date"]<datetime.datetime.strptime(ENDdate_str, "%Y%m%d")]
+mom = mom[mom["Date"]<datetime.datetime.strptime(ENDdate_str, "%Y%m%d")]
 
-factorReturn = toMean.mean(axis = 0)[factor_list]
-stockMeans = np.matrix(np.log(1 + np.dot(Betas.T, factorReturn)) * 255)
-covar = np.matrix((np.cov(np.log(Y.T + 1)))*255)
 
-optW = getOptimalPortfolio.getWeights(stockMeans, covar, 0.00025, stock_list)
-print(optW)
+toMean = pd.merge(data, mom, on = "Date", how = "left")
+print(toMean)
+
+stockMeans, covar, factorReturn = multiFactor.getExpReturn(toMean, toReg, betas, stock_list, factor_list)
+optWeight, marketPortfolio, maxSharpe = getOptimalPortfolio.getWeights(stockMeans, covar, 0.0025, stock_list)
+
+print(factorReturn)
+print(marketPortfolio)
+
+
 optW = np.array([0.1007598818153811, 0.2095098186253345, 0.43839111238558587, 0.17015442982085535, 0.08118475735284322])
 
 
@@ -89,6 +109,8 @@ riskParityW = result.x
 riskBudget(np.matrix(riskParityW).T)
 
 # remove mean
+Y =np.array(toReg[stock_list])
+
 m = np.mean(Y, 0)
 Y_m = Y - m
 
@@ -159,4 +181,5 @@ result = minimize(sseCES, x0 = x0, bounds = bound, constraints = cons)
 
 ESriskParityW = result.x
 
-pd.DataFrame({"volParity":riskParityW, "ESParity": ESriskParityW}, index = stock_list)
+summ = pd.DataFrame({"volParity":riskParityW, "ESParity": ESriskParityW}, index = stock_list)
+print(summ)

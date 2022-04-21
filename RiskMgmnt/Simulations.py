@@ -20,7 +20,7 @@ func2: sim_pca(cov_mat, nsim, target):
     regurn: Matrix of simulated data (nsim * N)
 
 '''
-
+import pandas as pd
 import numpy as np
 from numpy.linalg import eigh
 
@@ -96,3 +96,15 @@ def sim_pca(cov_mat, nsim, target):
     r = np.random.normal(size=(m, nsim)) 
     result = np.matmul(B, r).T
     return result
+
+
+if __name__ == '__main__':
+    data = pd.read_csv(".\\Week03\\DailyReturn.csv")
+    print(data.shape)
+    cov = data.cov().values
+    print(cov.shape)
+    print(cov)
+    result = sim_pca(cov, 10000, target = 0.9)
+    print(result.shape)
+    print(np.cov(result.T).shape)
+    print(np.cov(result.T))

@@ -21,9 +21,9 @@ from scipy.optimize import minimize
 
 #Normal distribution
 def normal(data, alpha = 0.05):
-    mu = data.mean().values
+    mu = data.mean()
     data -= mu
-    sigma = np.std(data).values
+    sigma = np.std(data)
 
     VaR_Normal = st.norm.ppf(alpha, loc=mu, scale=sigma)
     return VaR_Normal 
@@ -33,7 +33,7 @@ def normal(data, alpha = 0.05):
 from RiskMgmnt import expWeighted
 
 def normal_w(data, alpha = 0.05, Lambda = 0.97):
-    mu = data.mean().values
+    mu = data.mean()
     sigma_w = expWeighted.cov_w(data, Lambda)
 
     VaR_Normal_w = st.norm.ppf(alpha, loc = mu, scale = sigma_w) 
@@ -56,7 +56,8 @@ def t_mle(data, alpha = 0.05):
 
 #Historic simulation
 def hist(data, alpha = 0.05, times = 0):
-    times = round(data.size * 0.8)
+    if times == 0:
+        times = round(data.size * 0.8)
     distribution = data.sample(times, replace=True)
     VaR_hist = np.percentile(distribution, alpha)
     return VaR_hist

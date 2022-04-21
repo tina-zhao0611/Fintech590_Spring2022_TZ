@@ -24,7 +24,9 @@ def getWeights(stockMeans, covar, rf, nameList):
     result = minimize(sharpeCalculate, x0 = x0, args = args, bounds = bound, constraints = cons)
 
     optimal_weight = result.x
+    maxSharpe = -result.fun
     marketPortfolio = pd.DataFrame({"Stock": nameList,"weights(%)": [round(x, 4) for x in (optimal_weight * 100)]})
-    print(marketPortfolio)
-    
-    return optimal_weight
+    # print(marketPortfolio)
+    marketPortfolio["E(Return)"] = np.array(stockMeans)[0]
+
+    return optimal_weight, marketPortfolio, maxSharpe

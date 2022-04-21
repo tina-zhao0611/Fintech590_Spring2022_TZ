@@ -4,7 +4,7 @@ module for calculating exponentially weighted covariance
 function: cov_w(r, Lambda):
 
 '''
-
+import pandas as pd
 import numpy as np
 
 def expWeight(n, Lambda):
@@ -30,3 +30,16 @@ def cov_w(r, Lambda):
     w = expWeight(n, Lambda)
     cov_w = np.sqrt(cov_2arrays(r.values, r.values, w))
     return cov_w
+
+def expWeightedCov(df, nambda):
+    n, m = df.shape
+    weights = expWeight(n, nambda)
+    Cov = pd.DataFrame(index = df.columns[1:], columns = df.columns[1:]) #the first column is the date
+    for i in range(m - 1):
+        for j in range(m - 1):
+            Cov.iloc[i][j] = cov_2arrays(df.iloc[:, i + 1], df.iloc[:, j + 1], weights)
+    return Cov
+
+if __name__ == '__main__':
+    weight = expWeight(20, 0.95)
+    print(weight)

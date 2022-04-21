@@ -2,10 +2,14 @@ import pandas as pd
 import datetime
 import statsmodels.api as sm
 import numpy as np
-from scipy.optimize import minimize
-import matplotlib.pyplot as plt
 
-from RiskMgmnt import getReturn
+
+import sys,os
+from sympy import div
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+sys.path.append(BASE_DIR)
+
+from RiskMgmnt import getReturn, multiFactor, getOptimalPortfolio
 
 def whiteSpace(df):
     col_names = df.columns.tolist()
@@ -14,54 +18,49 @@ def whiteSpace(df):
     df.columns=col_names 
     return df
 
-data = whiteSpace(pd.read_csv("Week08\\F-F_Research_Data_Factors_daily.csv"))
-stocks = whiteSpace(pd.read_csv("Week08\\DailyReturn.csv"))
-mom = whiteSpace(pd.read_csv("Week08\\F-F_Momentum_Factor_daily.csv"))
+data = pd.read_csv("Week08\\F-F_Research_Data_Factors_daily.csv")
+stocks = pd.read_csv("Week08\\DailyReturn.csv")
+mom = pd.read_csv("Week08\\F-F_Momentum_Factor_daily.csv")
+# eliminate white spaces
+col_names = mom.columns.tolist()
+for index,value in enumerate(col_names):
+    col_names[index]= value.replace(" ","")
+mom.columns=col_names 
 
-factor_list = ["Mkt-RF", "SMB", "HML", "Mom"]
 stock_list = ["AAPL",  "MSFT", "BRK-B", "JNJ", "CSCO"]
+factor_list = ["Mkt-RF", "SMB", "HML", "Mom"]
 
+
+# convert the date format 
 data["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(str(x), "%Y%m%d"), data["Date"]))
 stocks["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(x, "%m/%d/%Y"), stocks["Date"]))
 mom["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(str(x), "%Y%m%d"), mom["Date"]))
 
-FFM = pd.merge(data, mom, on = "Date", how = "left").dropna(axis = 0)
 
-# divided by 100 to get like unit
-FFM[factor_list] = FFM[factor_list]/100 
-toReg = pd.merge(stocks, FFM, on = "Date", how = "left").dropna(axis = 0)
+ffm = pd.merge(data, mom, on = "Date", how = "left")
 
-X = np.array(sm.add_constant(toReg[factor_list]))
-Y =np.array(toReg[stock_list])
+toReg = pd.merge(stocks, pd.merge(data, mom, on = "Date", how = "left"), on = "Date", how = "left")
+toReg[factor_list] = toReg[factor_list] /100
 
-Betas = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), Y)[1:]
+betas, Betas = multiFactor.getParameters(toReg, stock_list, factor_list)
+
+print(betas)
 
 startdate_str = "20120114"
 ENDdate_str = "20220115"
-toMean = FFM[FFM["Date"]>datetime.datetime.strptime(startdate_str, "%Y%m%d")]
-toMean = toMean[toMean["Date"]<datetime.datetime.strptime(ENDdate_str, "%Y%m%d")]
-
-factorReturn = toMean.mean(axis = 0)[factor_list]
-stockMeans = np.matrix(np.log(1 + np.dot(Betas.T, factorReturn)) * 255)
-covar = np.matrix((np.cov(np.log(Y.T + 1)))*255)
-
-nStocks = len(stock_list)
+data = data[data["Date"]>datetime.datetime.strptime(startdate_str, "%Y%m%d")]
+mom = mom[mom["Date"]>datetime.datetime.strptime(startdate_str, "%Y%m%d")]
+data = data[data["Date"]<datetime.datetime.strptime(ENDdate_str, "%Y%m%d")]
+mom = mom[mom["Date"]<datetime.datetime.strptime(ENDdate_str, "%Y%m%d")]
 
 
-def sharpeCalculate(w, stockReturn, stockCov, rf):
-    w = np.matrix(w)
-    r_p = w * stockReturn.T
-    s_p = np.sqrt(w * stockCov * w.T)
-    sharpe = (r_p[0,0] - rf) / s_p[0,0] 
-    return -sharpe
-x0 = np.array(nStocks*[1 / nStocks])
-args = (stockMeans, covar, 0.00025)
-bound = [(0.0, 1) for _ in stock_list]
-cons = {'type':'eq', 'fun': lambda x: np.sum(x) - 1}
-result = minimize(sharpeCalculate, x0 = x0, args = args, bounds = bound, constraints = cons)
+toMean = pd.merge(data, mom, on = "Date", how = "left")
+print(toMean)
 
-optimal_weight = result.x
-marketPortfolio = pd.DataFrame({"Stock": stock_list,"weights(%)": [round(x, 4) for x in (optimal_weight * 100)]})
+stockMeans, covar, factorReturn = multiFactor.getExpReturn(toMean, toReg, betas, stock_list, factor_list)
+optWeight, marketPortfolio, maxSharpe = getOptimalPortfolio.getWeights(stockMeans, covar, 0.0025, stock_list)
+
+print(factorReturn)
 print(marketPortfolio)
 
 
@@ -78,10 +77,10 @@ updatemom["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(str(x), "%
 updateR["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(str(x), "%m/%d/%Y"), updateR["Date"]))
 
 updateFFM = pd.merge(updateFF3, updatemom, on = "Date", how = "left").dropna(axis = 0)
-updateFFM[factor_list] = updateFFM[factor_list] / 100
 
-allFFM = pd.concat([FFM, updateFFM], axis = 0)
-upData = pd.merge(updateR, allFFM, on = "Date", how = "left").dropna(axis = 0)
+allFFM = pd.concat([ffm, updateFFM], axis = 0).reset_index(drop = True)
+upData = pd.merge(updateR, allFFM, on = "Date", how = "left").reset_index(drop = True)
+upData[factor_list] = upData[factor_list] / 100
 
 initialWeight = np.array([0.1007598818153811, 0.2095098186253345, 0.43839111238558587, 0.17015442982085535, 0.08118475735284322])
 lastW= initialWeight
@@ -106,6 +105,7 @@ for i in range(t):
     
 
 pReturn = np.array(pReturn)
+pstd = np.std(pReturn, ddof = 1)
 weights = pd.DataFrame(weightList, columns = stock_list) 
 totalReturn = np.exp(sum(np.log(pReturn + 1))) - 1
 upData.insert(loc = upData.shape[1], column = "Alpha", value = np.array(residR))
@@ -144,3 +144,6 @@ Y = np.array(Y)
 Beta = np.dot(np.dot(np.linalg.inv(np.dot(X.T, X)), X.T), Y)[1]
 cSD = Beta * np.std(pReturn, ddof = 1)
 Attribution.insert(loc = 2, column = "VolAttribution", value = cSD)
+portfolio = pd.DataFrame({"TotalReturn": totalReturn, "ReturnAttribution": totalReturn, "VolAttribution": pstd}, index = ["Portfolio"])
+Attribution = pd.concat([Attribution, portfolio], axis = 0)
+print(Attribution) 

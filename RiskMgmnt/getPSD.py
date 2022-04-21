@@ -108,3 +108,9 @@ def higham_psd(A, max_iterations=1000, tolerance = 1e-9):
         
         iteration += 1
     return Y
+
+def isPSD(mat):
+    if(sum(eigh(mat)[0]>-1e-8) == mat.shape[0]):
+        return "YES"
+    else:
+        return "NO"

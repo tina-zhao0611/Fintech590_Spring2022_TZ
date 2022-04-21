@@ -13,12 +13,12 @@ from RiskMgmnt import getReturn, T_dist_fitter, Statistics, Simulations, getVaR,
 
 prices = pd.read_csv("Week05\\DailyPrices.csv")
 prices.drop(columns = "SPY", inplace = True) 
-prices.set_index("Date", drop = True, append = True, inplace = True)
-
 returns = getReturn.return_calculate_mat(prices, method = "ARITHMETIC")
 
 # fit every stock's return into t distribution
 stock_dist = pd.DataFrame(columns = ["ticker", "df", "scale"])
+# prices.set_index("Date", drop = True, append = True, inplace = True)
+returns = returns.drop(columns="Date")
 U = returns.copy()
 
 for col_name, column in returns.iteritems():
@@ -28,6 +28,7 @@ for col_name, column in returns.iteritems():
     
     # into uniform distribution through CDF
     temp_col = st.t.cdf(column, df = df_t, loc = mu_t, scale = scale_t)
+    # temp_col = st.norm.ppf(temp_col)
     U.loc[:][col_name] = temp_col
 stock_dist.set_index("ticker", drop = True, append = False, inplace = True)
 
@@ -88,4 +89,9 @@ summary["total"] = summary["A"] + summary["B"] + summary["C"]
 for name, portfolio in summary.iteritems():
     print("Portfolio", name, "VaR: ", getVaR.empirical(portfolio, alpha = 0.05))
     print("Portfolio", name, "ES:  ", getES.empirical(portfolio, alpha = 0.05))
+    
+import matplotlib.pyplot as plt
+plt.cla()
+plt.hist(U["AMZN"])
+plt.show()
     

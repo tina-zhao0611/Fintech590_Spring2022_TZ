@@ -11,13 +11,13 @@ x = np.array(data["x"])
 y = np.array(data["y"])
 
 
-plt.figure(figsize = (8,5))
+''' plt.figure(figsize = (8,5))
 plt.xlabel("x") 
 plt.ylabel("y")
 plt.scatter(x, y)
 plt.title("XY Scatter")
 plt.savefig("Week02\\Problem2_Scatter.png")
-
+ '''
 #OLS model
 regression = sm.OLS(y, sm.add_constant(x)) 
 model_ols = regression.fit() 
@@ -25,7 +25,7 @@ data["yhat"] = model_ols.params[0] + model_ols.params[1]*data["x"]
 data["resid"] = model_ols.resid
 print(model_ols.summary())
 
-plt.cla()
+''' plt.cla()
 data.plot(x="x", y="y",kind="scatter",figsize=(8,5))
 plt.plot(data["x"], model_ols.params[0] + model_ols.params[1]*data["x"],"r")
 plt.text(-2, 4, "y="+ str(round(model_ols.params[0],3)) + "+" +str(round(model_ols.params[1],3)) + "*x" )
@@ -55,6 +55,15 @@ plt.savefig("Week02\\Problem2_residualDensity.png")
 
 sm.qqplot(data.resid, line='s')
 plt.savefig("Week02\\Problem2_residual_QQplot.png")
+ '''
+def getAIC(k, L):
+    #k is the number of parameters
+    #L is the log likelihood
+    aic = 2*k - 2*L
+    return aic
+def getBIC(k, n, L):
+    bic = 2 * k * np.log(n) - 2*L
+    return bic
 
 #MLE -- assume mormality
 def likelyhood_norm(parameters): 
@@ -67,6 +76,9 @@ def likelyhood_norm(parameters):
     L = -x.size / 2 * np.log(s*s*2*np.pi) - np.sum(xm*xm) / (2*s*s)  #L is the log likelihood
     return -L
 mle_model_norm = minimize(likelyhood_norm, np.array([0.1, 0.6, 0.2])) #minimize -L means maximize L
+print("MLE_NORM_AIC = ", getAIC(3, -mle_model_norm.fun))
+print("MLE_NORM_BIC = ", getBIC(3, 100, -mle_model_norm.fun))
+
 
 #MLE -- assume T distribution
 def likelyhood_t(parameters): 
@@ -79,6 +91,7 @@ def likelyhood_t(parameters):
     return -L
 
 mle_model_t = minimize(likelyhood_t, np.array([0.1, 0.6])) #minimize -L means maximize L
-
+print("MLE_T_AIC = ", getAIC(4, -mle_model_t.fun))
+print("MLE_T_BIC = ", getBIC(4, 100, -mle_model_t.fun))
 plt.cla()
 print("OLS: ", model_ols.params, "\nMLE-Assume normality:", mle_model_norm.x, "Log Likelihood: ", -mle_model_norm.fun, "\nMLE-Assume T distribution: ", mle_model_t.x, "Log Likelihood: ", -mle_model_t.fun,) 

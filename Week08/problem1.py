@@ -37,9 +37,10 @@ mom["Date"] = pd.Series(map(lambda x:datetime.datetime.strptime(str(x), "%Y%m%d"
 toReg = pd.merge(stocks, pd.merge(data, mom, on = "Date", how = "left"), on = "Date", how = "left")
 toReg[factor_list] = toReg[factor_list] /100
 
-betas = multiFactor.getParameters(toReg, stock_list, factor_list)
+betas, Betas = multiFactor.getParameters(toReg, stock_list, factor_list)
 
 print(betas)
+print(Betas)
 
 startdate_str = "20120114"
 ENDdate_str = "20220115"
@@ -51,7 +52,7 @@ mom = mom[mom["Date"]<datetime.datetime.strptime(ENDdate_str, "%Y%m%d")]
 toMean = pd.merge(data, mom, on = "Date", how = "left")
 print(toMean)
 
-stockMeans, covar, factorReturn = multiFactor.getExpReturn(toMean, toReg, betas, stock_list, factor_list)
+stockMeans, covar, factorReturn = multiFactor.getExpReturn(toMean, toReg, Betas, stock_list, factor_list)
 optWeight, marketPortfolio, maxSharpe = getOptimalPortfolio.getWeights(stockMeans, covar, 0.0025, stock_list)
 
 print(factorReturn)
@@ -60,7 +61,8 @@ print(marketPortfolio)
 #portfolio construction
 initialWeight = np.array([0.1007598818153811, 0.2095098186253345, 0.43839111238558587, 0.17015442982085535, 0.08118475735284322])
 # intialWeight = pd.DataFrame({"stock": stock_list, "weight": Weight})
-
+print("initial:",initialWeight)
+print("opt", optWeight)
 updateP = pd.read_csv("Week08\\updated_prices.csv")
 updateR = getReturn.return_calculate_mat(updateP)
 R = updateR.copy().reset_index()[stock_list]

@@ -57,7 +57,7 @@ mom = mom[mom["Date"]<datetime.datetime.strptime(ENDdate_str, "%Y%m%d")]
 toMean = pd.merge(data, mom, on = "Date", how = "left")
 print(toMean)
 
-stockMeans, covar, factorReturn = multiFactor.getExpReturn(toMean, toReg, betas, stock_list, factor_list)
+stockMeans, covar, factorReturn = multiFactor.getExpReturn(toMean, toReg, Betas, stock_list, factor_list)
 optWeight, marketPortfolio, maxSharpe = getOptimalPortfolio.getWeights(stockMeans, covar, 0.0025, stock_list)
 
 print(factorReturn)
@@ -84,7 +84,7 @@ upData[factor_list] = upData[factor_list] / 100
 
 initialWeight = np.array([0.1007598818153811, 0.2095098186253345, 0.43839111238558587, 0.17015442982085535, 0.08118475735284322])
 lastW= initialWeight
-# lastW = optimal_weight
+# lastW = optWeight
 R = updateR.copy().reset_index()[stock_list]
 ffReturns = upData[factor_list] 
 t = R.shape[0]
